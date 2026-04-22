@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 
 app.get("/", (req, res) => {
-  res.send("Hello Rajcosiva🚀");
+  res.send("Hello from Kubernetes App v1");
 });
 
 app.listen(process.env.PORT || 3000, "0.0.0.0", () => {
