@@ -1,9 +1,8 @@
-const http = require('http');
+const express = require("express");
+const app = express();
 
-const server = http.createServer((req, res) => {
-  res.end("Hello from DevOps Docker Project!");
+app.get("/", (req, res) => {
+  res.send("Hello from Node.js App running on AKS 🚀");
 });
 
-server.listen(3000, () => {
-  console.log("Server running on port 3000");
-});
+module.exports = app;
