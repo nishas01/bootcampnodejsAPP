@@ -1,0 +1,211 @@
+Overall Idea of This Pipeline
+
+This pipeline does:
+
+Pull code from GitHub
+Install Node.js dependencies
+Build Docker image
+Push image to Docker Hub
+Deploy app to Azure Kubernetes Service (AKS) using Helm
+Verify deployment
+Enable autoscaling (HPA)
+⚙️ 1. Pipeline Block
+pipeline {
+    agent any
+👉 Meaning:
+pipeline {} → Jenkins Declarative Pipeline starts
+agent any → run this pipeline on any available Jenkins agent (node/VM)
+🌍 2. Environment Block
+environment {
+    NAMESPACE = "default"
+    KUBECONFIG = "/var/jenkins_home/.kube/config"
+}
+👉 Meaning:
+🔹 NAMESPACE
+Kubernetes namespace = default
+All deployments will go inside this namespace
+🔹 KUBECONFIG
+Path where Jenkins finds Kubernetes credentials
+Allows Jenkins to run:
+kubectl get pods
+kubectl apply
+etc.
+
+👉 Without this, Jenkins cannot talk to AKS cluster.
+
+📥 3. Stage: Checkout
+stage('Checkout') {
+👉 What it does:
+
+Pulls source code from GitHub repo.
+
+checkout scmGit(
+    branches: [[name: '*/master']],
+Pulls master branch
+credentialsId: 'github',
+Uses stored GitHub credentials in Jenkins
+url: 'https://github.com/nishas01/bootcampnodejsAPP.git'
+GitHub repo URL
+✅ Output:
+
+Your app code is now inside Jenkins workspace.
+
+📦 4. Stage: Install Dependencies
+stage('Install Dependencies')
+👉 What it does:
+
+Installs Node.js packages (npm install)
+
+docker.image('node:20').inside {
+    sh 'npm install'
+}
+🔥 Important concept:
+Jenkins temporarily runs a Docker container with Node 20
+Inside that container:
+your code is mounted
+npm install runs
+📌 Why Docker here?
+No need to install Node on Jenkins machine
+Clean, isolated environment
+🐳 5. Stage: Docker Build
+stage('Docker Build')
+👉 What it does:
+
+Builds Docker image from your Dockerfile
+
+sh 'docker build -t nisha0111/demoproject:v4 .'
+Breakdown:
+docker build → create image
+-t → tag name
+nisha0111/demoproject → DockerHub repo
+v4 → version tag
+. → current directory (Dockerfile location)
+📌 Output:
+
+You now have a local Docker image:
+
+nisha0111/demoproject:v4
+🔐 6. Stage: Docker Login
+stage('Docker Login')
+👉 What it does:
+
+Logs Jenkins into Docker Hub.
+
+withCredentials([usernamePassword(
+    credentialsId: 'docker-token',
+Uses Jenkins stored credentials (docker-token)
+usernameVariable: 'USER',
+passwordVariable: 'PASS'
+Injects credentials as environment variables
+sh 'echo $PASS | docker login -u $USER --password-stdin'
+🔥 Meaning:
+Secure login to Docker Hub
+Password is NOT exposed in logs
+📤 7. Stage: Docker Push
+stage('Docker Push')
+👉 What it does:
+
+Pushes Docker image to Docker Hub.
+
+sh 'docker push nisha0111/demoproject:v4'
+📌 Result:
+
+Image is now stored in:
+👉 Docker Hub repository
+so Kubernetes can pull it later.
+
+☸️ 8. Stage: Deploy to AKS (Helm)
+stage('Deploy to AKS (Helm)')
+👉 What it does:
+
+Deploys application to Kubernetes using Helm chart.
+
+kubectl get nodes
+Checks cluster connectivity
+🚀 Helm deployment:
+helm upgrade --install myapp ./helm-chart
+Breakdown:
+helm → Kubernetes package manager
+upgrade --install →
+install if not present
+upgrade if already exists
+myapp → release name
+./helm-chart → chart folder
+🔧 Custom values:
+--set image.repository=nisha0111/demoproject
+--set image.tag=v4
+
+👉 This tells Kubernetes:
+
+use this Docker image
+version = v4
+📌 Result:
+Pods get created in AKS
+Your Node.js app runs in Kubernetes
+🔍 9. Stage: Verify Deployment
+stage('Verify Deployment')
+👉 What it does:
+
+Checks if app is running properly.
+
+kubectl get pods -n default
+shows running containers
+kubectl get svc -n default
+shows services (exposes app)
+kubectl get ingress -n default
+shows external access URL (if ingress used)
+📌 Purpose:
+
+This is post-deployment validation
+
+📈 10. Stage: Apply HPA (Autoscaling)
+stage('Apply HPA')
+👉 What it does:
+
+Applies Kubernetes Horizontal Pod Autoscaler.
+
+kubectl apply -f helm-chart/templates/hpa.yaml
+Creates autoscaling rule
+kubectl get hpa -n default
+Shows autoscaler status
+📌 What HPA does:
+
+Automatically increases/decreases pods based on CPU/memory usage.
+
+Example:
+
+Traffic increases → more pods
+Traffic decreases → fewer pods
+🧾 FINAL FLOW SUMMARY
+GitHub Code
+   ↓
+Checkout in Jenkins
+   ↓
+npm install (Node container)
+   ↓
+Docker Build Image
+   ↓
+Docker Hub Login
+   ↓
+Push Image to Docker Hub
+   ↓
+Helm Deploy to AKS
+   ↓
+Verify Pods + Services
+   ↓
+Apply Autoscaling (HPA)
+💡 Key DevOps Concepts in this pipeline
+1. CI (Continuous Integration)
+Checkout
+npm install
+Docker build
+2. CD (Continuous Deployment)
+Docker push
+Helm deploy to AKS
+3. Infrastructure
+Kubernetes (AKS)
+Helm charts
+HPA autoscaling
+4. Security
+Jenkins credentials store
+Docker login via secure variables
