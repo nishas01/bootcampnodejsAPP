@@ -1,48 +1,12 @@
-<<<<<<< HEAD
-# ---------- Stage 1: Build ----------
-FROM node:20-alpine AS builder
+FROM node:20
 
 WORKDIR /app
- 
-# Copy dependency files first (for better caching)
+
 COPY package*.json ./
+RUN npm install
 
-# Install dependencies
-RUN npm ci
-
-# Copy rest of the code
 COPY . .
 
-# Build application
-RUN npm run build
-
-
-# ---------- Stage 2: Production ----------
-FROM node:20-alpine
-
-WORKDIR /app
-
-# Set environment
-ENV NODE_ENV=production
-ENV PORT=3000
-
-# Copy only necessary files from builder
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
-
-# Expose application port
 EXPOSE 3000
 
-# Start application
 CMD ["npm", "start"]
-=======
-FROM node:18
-WORKDIR /app
-COPY package.json /app/
-RUN npm install
-COPY . /app/
-EXPOSE 3000
-CMD ["node","app.js"]
-
->>>>>>> f305fb2 (inital commit)
