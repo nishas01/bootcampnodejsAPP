@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "name": "02-basic-example",
   "private": true,
   "version": "0.0.0",
@@ -24,4 +25,10 @@
     "vite": "^3.0.7",
     "vitest": "^0.22.1"
   }
+=======
+  "name": "myapp",
+  "version": "1.0.0",
+  "main": "app.js",
+  "dependencies": {}
+>>>>>>> f305fb2 (inital commit)
 }
