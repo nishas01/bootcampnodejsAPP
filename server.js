@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 const express = require("express");
 const app = express();
 
@@ -8,3 +9,6 @@ app.get("/", (req, res) => {
 app.listen(process.env.PORT || 3001, "0.0.0.0", () => {
   console.log("Server running on port 3000");
 });
+=======
+res.end("Hello DevOps Fresh Flow v1");
+>>>>>>> 8af0ff8 (fresh commit v1)
